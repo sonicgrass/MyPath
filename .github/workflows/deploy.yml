@@ -44,6 +44,7 @@ jobs:
           
           if ! git diff --staged --quiet; then
             git commit -m "Automated daily calendar update [skip ci]"
+            git pull --rebase origin main
             git push origin main
           else
             echo "No changes detected in calendar CSV. Skipping commit."
