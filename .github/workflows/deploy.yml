@@ -9,19 +9,19 @@ on:
 
 jobs:
   scrape-and-commit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: write
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python Environment
-        uses: actions/setup-python@v5.4.0
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -42,7 +42,6 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add mypath_aggregated_calendar.csv
           
-          # Check if there are changes before committing to avoid empty commit errors
           if ! git diff --staged --quiet; then
             git commit -m "Automated daily calendar update [skip ci]"
             git push origin main
