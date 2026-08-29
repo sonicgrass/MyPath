@@ -2,21 +2,26 @@ name: Automated Art Calendar Scraper
 
 on:
   schedule:
-    # Runs automatically every day at 6:00 AM UTC (2:00 AM EDT)
+    # Runs daily at 6:00 AM UTC (2:00 AM EDT)
     - cron: '0 6 * * *'
-  # Allows you to manually trigger the workflow anytime from the GitHub UI
+  # Allows manual triggers from the GitHub Actions tab anytime
   workflow_dispatch:
 
 jobs:
   scrape-and-commit:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python Environment
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.4.0
         with:
           python-version: '3.12'
 
@@ -31,9 +36,16 @@ jobs:
         run: |
           python scraper.py
 
-      - name: Commit and Push Updated Data
+      - name: Commit and Push Updated CSV
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add mypath_aggregated_calendar.csv
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Automated daily calendar update [skip ci]" && git push)
+          
+          # Check if there are changes before committing to avoid empty commit errors
+          if ! git diff --staged --quiet; then
+            git commit -m "Automated daily calendar update [skip ci]"
+            git push origin main
+          else
+            echo "No changes detected in calendar CSV. Skipping commit."
+          fi
