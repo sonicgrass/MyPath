@@ -435,6 +435,21 @@
             const grid = document.getElementById('cardGrid');
             const counter = document.getElementById('metricCounter');
 
+            // Grab the first direct link if multiple sources exist
+            const directUrl = ev['Direct Links'] ? ev['Direct Links'].split(' | ')[0] : '#';
+
+            // Render card button pointing straight to directUrl
+            const cardHtml = `
+            <div class="card">
+                <h3 class="card-title">${ev.Title}</h3>
+                <p class="card-date">${ev.Dates}</p>
+                <p class="card-desc">${ev.Description}</p>
+                <a href="${directUrl}" target="_blank" rel="noopener noreferrer" class="event-link-btn">
+                View Event Details →
+                </a>
+            </div>
+            `;
+
             counter.innerHTML = `INDEXED: <span>${data.length}</span> ITEMS`;
 
             if (data.length === 0) {
