@@ -84,27 +84,6 @@
             font-family: var(--font-mono);
         }
 
-        .status-pill {
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            color: var(--accent-green);
-            background: rgba(0, 255, 170, 0.08);
-            border: 1px solid rgba(0, 255, 170, 0.2);
-            padding: 4px 10px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--accent-green);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--accent-green);
-        }
-
         .toolbar {
             max-width: 1400px;
             margin: 32px auto 24px;
@@ -349,7 +328,7 @@
         <div class="header-inner">
             <div class="brand">
                 <a href="#" class="brand-logo">MY<span>PATH</span></a>
-
+            </div>
         </div>
     </header>
 
@@ -406,7 +385,7 @@
 
         async function initDashboard() {
             try {
-                const res = await fetch('mypath_aggregated_calendar.csv', { cache: 'no-cache' });
+                const res = await fetch('mypath_aggregated_calendar.csv?v=' + new Date().getTime());
                 const csvData = await res.text();
                 const rows = parseCSV(csvData);
 
@@ -435,21 +414,6 @@
             const grid = document.getElementById('cardGrid');
             const counter = document.getElementById('metricCounter');
 
-            // Grab the first direct link if multiple sources exist
-            const directUrl = ev['Direct Links'] ? ev['Direct Links'].split(' | ')[0] : '#';
-
-            // Render card button pointing straight to directUrl
-            const cardHtml = `
-            <div class="card">
-                <h3 class="card-title">${ev.Title}</h3>
-                <p class="card-date">${ev.Dates}</p>
-                <p class="card-desc">${ev.Description}</p>
-                <a href="${directUrl}" target="_blank" rel="noopener noreferrer" class="event-link-btn">
-                View Event Details →
-                </a>
-            </div>
-            `;
-
             counter.innerHTML = `INDEXED: <span>${data.length}</span> ITEMS`;
 
             if (data.length === 0) {
@@ -459,9 +423,11 @@
 
             grid.innerHTML = data.map(ev => {
                 const buzzClass = ev.mentions > 2 ? 'buzz-high' : (ev.mentions > 1 ? 'buzz-mid' : '');
+                
+                // Map each source pill to its exact corresponding link
                 const sourceLinks = ev.sources.map((src, idx) => {
                     const url = ev.links[idx] || ev.links[0] || '#';
-                    return `<a href="${url}" target="_blank" rel="noopener" class="source-pill">${src}</a>`;
+                    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="source-pill">${src} ↗</a>`;
                 }).join('');
 
                 return `
