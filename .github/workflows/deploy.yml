@@ -37,18 +37,19 @@ jobs:
         run: |
           python scraper.py
 
-      - name: Commit and Push Updated CSV
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add mypath_aggregated_calendar.csv
-          
-          if ! git diff --staged --quiet; then
-            git commit -m "Automated daily calendar update [skip ci]"
-            git fetch origin main
-            git rebase --autostash origin/main
-            git push origin main
-          else
-            echo "No changes detected in calendar CSV. Skipping commit."
-          fi
+        - name: Commit and Push Updated CSV
+                run: |
+                  git config --global user.name "github-actions[bot]"
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                  
+                  git add mypath_aggregated_calendar.csv
+                  
+                  if ! git diff --staged --quiet; then
+                    git commit -m "Automated daily calendar update [skip ci]"
+                    git fetch origin main
+                    # -X ours tells git to favor the newly generated CSV if a merge conflict happens
+                    git rebase -X ours --autostash origin/main
+                    git push origin main
+                  else
+                    echo "No changes detected in calendar CSV. Skipping commit."
+                  fi
