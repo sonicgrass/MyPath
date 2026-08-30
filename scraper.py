@@ -2,16 +2,15 @@ import os
 import sys
 import time
 import json
-
-# Ensure Python checks the local folder path first for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 import csv
 import re
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 import urllib3
+
+# Ensure Python checks the local folder path first for imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import Google GenAI SDK features safely
 try:
@@ -70,10 +69,11 @@ def parse_with_gemini_ai(source_name, page_html_text):
         1. Title (The exact name of the exhibition/show)
         2. Date (The exhibition timeline or occurrence date)
         3. Description (A brief 1-2 sentence teaser summary of what the show is about, if present)
+        4. Link (The direct URL or relative link path to the specific event detail page, if present. If missing, leave empty "")
         
         Return the result strictly as a clean JSON list of objects matching this exact structure:
         [
-          {{"title": "Example Show", "date": "Jan 12 – Mar 15, 2026", "description": "A deep-dive gallery overview."}}
+          {{"title": "Example Show", "date": "Jan 12 – Mar 15, 2026", "description": "A deep-dive gallery overview.", "link": "/exhibitions/example-show"}}
         ]
         
         If no exhibition events are present in the text, return an empty list: []
@@ -84,7 +84,7 @@ def parse_with_gemini_ai(source_name, page_html_text):
         """
         
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.0-flash',
             contents=prompt,
             config=types.GenerateContentConfig(response_mime_type="application/json")
         )
@@ -191,7 +191,7 @@ def scrape_source(session, source: ScrapeSource):
                 
                 if parts and len(parts[0]) < 100 and "Calendar" not in parts[0]:
                     link_el = soup.find('a', string=lambda s: s and parts[0] in s)
-                    event_url = urljoin(source.url, link_el['href']) if link_el else source.url
+                    event_url = urljoin(source.url, link_el['href']) if link_el and link_el.has_attr('href') else source.url
                     desc_str = " ".join(parts[3:]) if len(parts) > 3 else "N/A"
                     
                     events.append({
@@ -209,12 +209,15 @@ def scrape_source(session, source: ScrapeSource):
     if len(events) == 0 and raw_page_html:
         ai_extracted = parse_with_gemini_ai(source.name, raw_page_html)
         for item in ai_extracted:
+            raw_link = item.get("link", "").strip()
+            event_url = urljoin(source.url, raw_link) if raw_link else source.url
+
             events.append({
                 "title": item.get("title", "Unknown AI Show"),
                 "date": item.get("date", "See Link"),
                 "hours": "Regular Hours",
                 "description": item.get("description", "N/A"),
-                "link": source.url, 
+                "link": event_url, 
                 "category": source.category,
                 "source_site": source.name
             })
